@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    url: jdbc:sqlserver://127.0.0.1:1433;database=DEMO;Encrypt=False;
+    username: sa
+    password: q1w2e3r4t5...
+mybatis:
+  mapper-locations: classpath*:xml/*Mapper.xml
+mqtt:
+  enabled: true
+  broker: tcp://172.23.98.99:1883
+  clientId: mqttx_e4b1da48
+  username: emqtest1
+  password: passwd~!@eClient.10#$%^&*()_+
+  topic: liyiyuantopic
+logging:
+  level:
+    org.springframework.jdbc.core.JdbcTemplate: INFO
+server:
+  port: 8080
