@@ -1,10 +1,10 @@
 package com.example.demo.service.impl;
 
 import com.example.demo.config.MqttConfig;
+import com.example.demo.mqtt.MqttReconnectManager;
 import com.example.demo.mqtt.MyMqttClient;
 import com.example.demo.service.IMqttService;
 import org.eclipse.paho.mqttv5.client.MqttClient;
-import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
 import org.eclipse.paho.mqttv5.common.MqttException;
 import org.eclipse.paho.mqttv5.common.MqttMessage;
 import org.slf4j.Logger;
@@ -27,48 +27,45 @@ public class MqttServiceImpl implements IMqttService {
     private MqttClient mqttClient;
 
     @Autowired
-    private MqttConnectionOptions connectOptions;
-
-    @Autowired
     private MqttConfig mqttConfig;
 
     @Autowired
-    private MqttMessageCallback mqttMessageCallback;
+    private MqttReconnectManager mqttReconnectManager;
 
     /**
-     * 初始化MQTT客户端, 订阅l主题
+     * 初始化MQTT客户端, 订阅主题
      */
     @PostConstruct
     public void init() {
-        try {
-            if (!mqttClient.isConnected()) {
-                mqttClient.setCallback(mqttMessageCallback);
-                mqttClient.connect(connectOptions);
-            }
+        // 尝试连接到MQTT服务器
+        mqttReconnectManager.attemptConnection();
 
-            String topic = mqttConfig.getTopic();
-            if (topic != null && !topic.isEmpty()) {
-                subscribe(topic);
-            } else {
-                logger.warn("未配置MQTT订阅主题");
-            }
-        } catch (MqttException e) {
-            logger.error("MQTT客户端连接失败", e);
+        String topic = mqttConfig.getTopic();
+        if (topic != null && !topic.isEmpty()) {
+            subscribe(topic);
+        } else {
+            logger.warn("未配置MQTT订阅主题");
         }
     }
 
     @Override
     public void subscribe(String topic) {
         try {
+            // 检查连接状态，如果未连接则尝试重连
             if (!mqttClient.isConnected()) {
-                mqttClient.connect(connectOptions);
+                logger.warn("MQTT客户端未连接，正在尝试重新连接...");
+                mqttReconnectManager.attemptConnection();
+                if (!mqttClient.isConnected()) {
+                    logger.error("无法连接到MQTT服务器");
+                    throw new RuntimeException("MQTT客户端连接失败");
+                }
+                logger.info("MQTT客户端重新连接成功");
             }
 
             mqttClient.subscribe(topic, MyMqttClient.getQos());
-
-//            logger.info("订阅成功 - Topic: {}", topic);
+            logger.info("成功订阅主题: {}", topic);
         } catch (MqttException e) {
-//            logger.error("订阅失败 - Topic: {}", topic, e);
+            logger.error("订阅失败 - Topic: {}, 错误: {}", topic, e.getMessage());
             throw new RuntimeException("订阅失败", e);
         }
     }
@@ -77,12 +74,14 @@ public class MqttServiceImpl implements IMqttService {
     public void unsubscribe(String topic) {
         try {
             if (!mqttClient.isConnected()) {
+                logger.warn("MQTT客户端未连接，无法取消订阅");
                 return;
             }
 
             mqttClient.unsubscribe(topic);
+            logger.info("成功取消订阅主题: {}", topic);
         } catch (MqttException e) {
-//            logger.error("取消订阅失败 - Topic: {}", topic, e);
+            logger.error("取消订阅失败 - Topic: {}, 错误: {}", topic, e.getMessage());
             throw new RuntimeException("取消订阅失败", e);
         }
     }
@@ -90,8 +89,15 @@ public class MqttServiceImpl implements IMqttService {
     @Override
     public void publish(String topic, String message) {
         try {
+            // 检查连接状态，如果未连接则尝试重连
             if (!mqttClient.isConnected()) {
-                mqttClient.connect(connectOptions);
+                logger.warn("MQTT客户端未连接，正在尝试重新连接...");
+                mqttReconnectManager.attemptConnection();
+                if (!mqttClient.isConnected()) {
+                    logger.error("无法连接到MQTT服务器");
+                    throw new RuntimeException("MQTT客户端连接失败");
+                }
+                logger.info("MQTT客户端重新连接成功");
             }
 
             MqttMessage mqttMessage = new MqttMessage(message.getBytes(StandardCharsets.UTF_8));
@@ -99,8 +105,9 @@ public class MqttServiceImpl implements IMqttService {
             mqttMessage.setRetained(false);
 
             mqttClient.publish(topic, mqttMessage);
+            logger.info("成功发布消息到主题: {}, 消息内容: {}", topic, message);
         } catch (MqttException e) {
-//            logger.error("消息发布失败 - Topic: {}", topic, e);
+            logger.error("消息发布失败 - Topic: {}, 错误: {}", topic, e.getMessage());
             throw new RuntimeException("消息发布失败", e);
         }
     }

@@ -1,5 +1,6 @@
 package com.example.demo.service.impl;
 
+import com.example.demo.mqtt.MqttReconnectManager;
 import com.example.demo.service.IArchiveService;
 import org.eclipse.paho.mqttv5.client.IMqttToken;
 import org.eclipse.paho.mqttv5.client.MqttCallback;
@@ -26,11 +27,16 @@ public class MqttMessageCallback implements MqttCallback {
 
     @Autowired
     IArchiveService archiveService;
+    
+    @Autowired
+    private MqttReconnectManager mqttReconnectManager;
 
 
     @Override
     public void disconnected(MqttDisconnectResponse mqttDisconnectResponse) {
         logger.warn("MQTT连接断开: {}", mqttDisconnectResponse != null ? mqttDisconnectResponse.getReasonString() : "未知原因");
+        logger.info("开始尝试重新连接...");
+        mqttReconnectManager.attemptReconnection();
     }
 
     @Override
@@ -67,7 +73,10 @@ public class MqttMessageCallback implements MqttCallback {
 
     @Override
     public void connectComplete(boolean b, String s) {
-
+        logger.info("MQTT连接完成 - reconnect: {}, serverURI: {}", b, s);
+        
+        // 连接完成后，确保订阅到所需主题
+        mqttReconnectManager.subscribeToTopic();
     }
 
     @Override

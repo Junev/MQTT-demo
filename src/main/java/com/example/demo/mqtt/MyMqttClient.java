@@ -37,6 +37,16 @@ public class MyMqttClient {
         options.setUserName(mqttConfig.getUsername());
         options.setPassword(mqttConfig.getPassword().getBytes());
         options.setAutomaticReconnect(true);
+        // 设置连接超时时间
+        options.setConnectionTimeout(30);
+        // 设置心跳间隔
+        options.setKeepAliveInterval(20);
+        // 设置断开连接后的最大重试次数
+        options.setMaxReconnectDelay(10000);
+        // 设置清除会话
+        options.setCleanStart(true);
+        // 设置遗嘱消息（可选，但有助于识别客户端异常断开）
+        // options.setWillMessage(...);
         return options;
     }
 

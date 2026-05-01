@@ -19,7 +19,6 @@ public class MqttConfig {
     private String password;
 
     private String topic;
-
     public String getBroker() {
         return broker;
     }
