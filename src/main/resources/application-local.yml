@@ -7,6 +7,10 @@ spring:
     password: q1w2e3r4t5...
 mybatis:
   mapper-locations: classpath*:xml/*Mapper.xml
+mybatis-plus:
+  mapper-locations: classpath*:xml/*Mapper.xml
+  configuration:
+    map-underscore-to-camel-case: true
 mqtt:
   enabled: true
   broker: tcp://172.23.98.99:1883

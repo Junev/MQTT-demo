@@ -11,6 +11,7 @@ import org.eclipse.paho.mqttv5.common.packet.MqttProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -29,6 +30,7 @@ public class MqttMessageCallback implements MqttCallback {
     IArchiveService archiveService;
     
     @Autowired
+    @Lazy
     private MqttReconnectManager mqttReconnectManager;
 
 

@@ -8,7 +8,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 
 @SpringBootApplication
-@MapperScan("com.example.demo.dao.mapper")
+@MapperScan({
+        "com.example.demo.dao.mapper",
+        "com.example.demo.dao.mbp" })
 public class DemoApplication {
     private static final Logger logger
             = LoggerFactory.getLogger(DemoApplication.class);
